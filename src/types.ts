@@ -14,17 +14,6 @@ export interface Annotation {
   }>
 }
 
-export interface PdfDocument {
-  id: string
-  name: string
-  data: Uint8Array
-  annotations: Annotation[]
-  createdAt: number
-  lastModified: number
-}
-
-export type Document = PdfDocument
-
 export interface YoudaoResult {
   code: number
   msg: string

@@ -19,6 +19,10 @@ export default defineConfig({
         target: "http://localhost:3456",
         changeOrigin: true,
       },
+      "/translate": {
+        target: "http://localhost:3456",
+        changeOrigin: true,
+      },
     },
   },
   build: {

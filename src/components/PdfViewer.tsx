@@ -4,6 +4,21 @@ import { TextLayerBuilder } from "pdfjs-dist/web/pdf_viewer.mjs"
 import type { Annotation } from "../types"
 import { translate } from "../utils/translate"
 
+// 调试面板：显示 PDF 渲染状态（无需开发者工具）
+declare global { interface Window { __pdfDebug?: string } }
+function DebugPanel() {
+  const [log, setLog] = React.useState("")
+  React.useEffect(() => {
+    const id = setInterval(() => setLog(window.__pdfDebug || "(无日志)"), 500)
+    return () => clearInterval(id)
+  }, [])
+  return (
+    <div style={{ background: "#111", color: "#0f0", padding: "6px 12px", fontSize: 12, fontFamily: "monospace", borderBottom: "1px solid #333" }}>
+      🐛 {log}
+    </div>
+  )
+}
+
 // PDF.js v4 配置
 pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs"
 
@@ -75,14 +90,6 @@ export default function PdfViewer({ pdfData, annotations, onAddAnnotation }: Pdf
       canvas.height = viewport.height
       wrapper.appendChild(canvas)
 
-      // 文字层容器 - 使用 PDF.js v4 官方样式
-      const textLayerEl = document.createElement("div")
-      textLayerEl.className = "textLayer"
-      textLayerEl.style.cssText =
-        `position:absolute;left:0;top:0;width:${viewport.width}px;height:${viewport.height}px;`
-      wrapper.appendChild(textLayerEl)
-      textLayerRef.current = textLayerEl
-
       // 加载官方 textLayer CSS
       let styleEl = document.querySelector("#pdf-viewer-css") as HTMLStyleElement
       if (!styleEl) {
@@ -94,21 +101,32 @@ export default function PdfViewer({ pdfData, annotations, onAddAnnotation }: Pdf
 
       // 渲染 PDF 到 Canvas
       const rawCtx = canvas.getContext("2d")!
-      await page.render({ canvasContext: rawCtx, viewport }).promise
+      try {
+        await page.render({ canvasContext: rawCtx, viewport }).promise
+        window.__pdfDebug = (window.__pdfDebug || '') + `render OK | `
+      } catch (e) {
+        window.__pdfDebug = (window.__pdfDebug || '') + `render FAIL: ${e} | `
+      }
 
-      // ─── 使用 PDF.js v4 官方 TextLayerBuilder ─────────────────────────────────
-      const textContent = await page.getTextContent()
-      const textLayerBuilder = new TextLayerBuilder({
-        textLayerDiv: textLayerEl,
-        pageIndex: page.pageNumber - 1,
-        viewport: viewport,
-      })
-
-      // v4 API: render 直接接受 textContentSource
-      await textLayerBuilder.render({ textContentSource: textContent })
+      // ─── 使用 PDF.js v4 TextLayerBuilder（正确 API）──────────────────────────
+      try {
+        // v4 构造函数只接受 { pdfPage }，render(viewport) 自己取文字层
+        const textLayerBuilder = new TextLayerBuilder({ pdfPage: page })
+        await textLayerBuilder.render(viewport)
+        // TextLayerBuilder 自己创建了 div，需要设置定位并插入 wrapper
+        const textLayerDiv = textLayerBuilder.div
+        textLayerDiv.style.cssText =
+          `position:absolute;left:0;top:0;width:${viewport.width}px;height:${viewport.height}px;` +
+          `transform:none !important;`
+        wrapper.appendChild(textLayerDiv)
+        textLayerRef.current = textLayerDiv
+        window.__pdfDebug = (window.__pdfDebug || '') + `textLayer OK | `
+      } catch (e) {
+        window.__pdfDebug = (window.__pdfDebug || '') + `textLayer FAIL: ${e} | `
+      }
 
       // 选字后的事件监听
-      textLayerEl.addEventListener("mouseup", handleTextSelection)
+      textLayerRef.current?.addEventListener("mouseup", handleTextSelection)
 
       // ─── 渲染已有标注 ──────────────────────────────────────────────────────
       annotations
@@ -408,6 +426,9 @@ export default function PdfViewer({ pdfData, annotations, onAddAnnotation }: Pdf
           ))}
         </div>
       </div>
+
+      {/* 调试面板 */}
+      <DebugPanel />
 
       {/* PDF 内容区 */}
       <div

@@ -16,8 +16,8 @@ function toLocal(ann: AnnoMeta): Annotation {
     text: ann.text,
     note: ann.note,
     color: ann.color,
-    rects: ann.rects || [],
-    createdAt: ann.created_at,
+    rects: ann.rects,
+    createdAt: new Date(ann.created_at).getTime(),
   }
 }
 
@@ -28,7 +28,7 @@ function toServer(ann: Annotation) {
     text: ann.text,
     note: ann.note,
     color: ann.color,
-    rects: ann.rects || (ann.rect ? [ann.rect] : []),
+    rects: ann.rects,
   }
 }
 

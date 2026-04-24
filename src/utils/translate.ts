@@ -1,6 +1,6 @@
 import type { YoudaoResult } from '../types'
 
-const API_URL = 'http://localhost:3456/translate'
+const API_URL = '/translate'
 
 export async function translate(text: string): Promise<YoudaoResult> {
   try {
