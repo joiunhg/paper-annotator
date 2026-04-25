@@ -118,6 +118,14 @@ export default function PdfViewer({ pdfData, annotations, onAddAnnotation }: Pdf
         textLayerDiv.style.cssText =
           `position:absolute;left:0;top:0;width:${viewport.width}px;height:${viewport.height}px;` +
           `transform:none !important;`
+        // 修复行尾文字选不上的问题：强制 span 宽度 auto
+        textLayerDiv.querySelectorAll('span').forEach((span) => {
+          const s = span as HTMLElement
+          s.style.whiteSpace = 'nowrap'
+          s.style.width = 'auto'
+          s.style.minWidth = '0'
+          s.style.maxWidth = 'none'
+        })
         wrapper.appendChild(textLayerDiv)
         textLayerRef.current = textLayerDiv
         window.__pdfDebug = (window.__pdfDebug || '') + `textLayer OK | `
