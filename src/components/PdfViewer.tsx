@@ -4,21 +4,6 @@ import { TextLayerBuilder } from "pdfjs-dist/web/pdf_viewer.mjs"
 import type { Annotation } from "../types"
 import { translate } from "../utils/translate"
 
-// 调试面板：显示 PDF 渲染状态（无需开发者工具）
-declare global { interface Window { __pdfDebug?: string } }
-function DebugPanel() {
-  const [log, setLog] = React.useState("")
-  React.useEffect(() => {
-    const id = setInterval(() => setLog(window.__pdfDebug || "(无日志)"), 500)
-    return () => clearInterval(id)
-  }, [])
-  return (
-    <div style={{ background: "#111", color: "#0f0", padding: "6px 12px", fontSize: 12, fontFamily: "monospace", borderBottom: "1px solid #333" }}>
-      🐛 {log}
-    </div>
-  )
-}
-
 // PDF.js v4 配置
 pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs"
 
@@ -434,9 +419,6 @@ export default function PdfViewer({ pdfData, annotations, onAddAnnotation }: Pdf
           ))}
         </div>
       </div>
-
-      {/* 调试面板 */}
-      <DebugPanel />
 
       {/* PDF 内容区 */}
       <div
