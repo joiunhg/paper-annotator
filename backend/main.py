@@ -106,11 +106,7 @@ async def health():
 @app.get("/translate")
 async def translate(q: str = Query(...)):
     if not YOUDAO_APP_KEY or not YOUDAO_APP_SECRET:
-        return {
-            "errorCode": "1",
-            "query": q,
-            "translation": ["请配置有道 API 密钥（设置环境变量 YOUDAO_APP_KEY 和 YOUDAO_APP_SECRET）"],
-        }
+        return {"errorCode": "1", "query": q, "translation": []}
 
     salt = str(random.randint(1, 100000))
     sign_str = f"{YOUDAO_APP_KEY}{q}{salt}{YOUDAO_APP_SECRET}"
